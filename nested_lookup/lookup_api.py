@@ -28,10 +28,11 @@ def _nested_delete(document, key):
     return document
 
 
-def nested_update(document, key, value, in_place=False, only_first=False):
+def nested_update(document, key, value, in_place=False, only_first=False, match=None):
     config = dict(
         only_first=only_first,
         updated=False,
+        match=match
     )
     if not in_place:
         document = copy.deepcopy(document)
@@ -55,8 +56,13 @@ def _nested_update(document, key, value, config):
             _nested_update(document=list_items, key=key, value=value, config=config)
     elif isinstance(document, dict):
         if document.get(key):
-            document[key] = value
-            config['updated'] = True
+            if config['match']:
+                if document.get(key) == config['match']:
+                    document[key] = value
+                    config['updated'] = True
+            else:
+                document[key] = value
+                config['updated'] = True
         for dict_key, dict_value in iteritems(document):
             _nested_update(document=dict_value, key=key, value=value, config=config)
     return document
