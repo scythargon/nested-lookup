@@ -28,13 +28,17 @@ def _nested_delete(document, key):
     return document
 
 
-def nested_update(document, key, value, in_place=False):
+def nested_update(document, key, value, in_place=False, only_first=False):
+    config = dict(
+        only_first=only_first,
+        updated=False,
+    )
     if not in_place:
         document = copy.deepcopy(document)
-    return _nested_update(document=document, key=key, value=value)
+    return _nested_update(document=document, key=key, value=value, config=config)
 
 
-def _nested_update(document, key, value):
+def _nested_update(document, key, value, config):
     """
     Method to update a key->value pair in a nested document
     Args:
@@ -44,12 +48,15 @@ def _nested_update(document, key, value):
     Return:
         Returns a document that has updated key, value pair.
     """
+    if config['only_first'] and config['updated']:
+        return document
     if isinstance(document, list):
         for list_items in document:
-            _nested_update(document=list_items, key=key, value=value)
+            _nested_update(document=list_items, key=key, value=value, config=config)
     elif isinstance(document, dict):
         if document.get(key):
             document[key] = value
+            config['updated'] = True
         for dict_key, dict_value in iteritems(document):
-            _nested_update(document=dict_value, key=key, value=value)
+            _nested_update(document=dict_value, key=key, value=value, config=config)
     return document
